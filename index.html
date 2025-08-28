@@ -4147,52 +4147,65 @@ function attachProxyLaunch() {
     const launch = document.getElementById('proxy-launch');
     if (!launch) return false;
 launch.addEventListener('click', () => {
-        // Compose scripted sequence: slow boot proxy subsystem + confirm flow (no fast crash/animation)
-        const lines = [
-            "> boot proxy subsystem …",
-            "> resolving upstream via uvv2",
-            "> hydrating tunnel: chacha20 · ok",
-            "> peer sync: 3/3",
-            "",
-            "Confirm?",
-            "Yes.",
-            "Launching…",
-        ];
+    // Compose scripted sequence: boot proxy subsystem logs
+    const lines = [
+        "[BOOT] Initializing Proxy Subsystem v3.4.9 …",
+        "[ OK ] Loaded core libraries: netstack.so, cryptomod.so",
+        "[INFO] Binding to loopback: 127.0.0.1:9050",
+        "[INFO] Allocating session cache (512MB)",
+        "[INIT] Starting tunnel manager (PID 2417)",
+        "[ OK ] Tunnel manager online",
+        "[INIT] Negotiating ephemeral keys… done.",
+        "[INFO] TLS Handshake successful with upstream node 10.45.22.19:443",
+        "[INFO] Loading route table [ 12 entries ]",
+        "[ROUTE] ::0/0  →  192.168.1.1 (default gw)",
+        "[ROUTE] 172.16.0.0/12 → proxy-bridge0",
+        "[ OK ] Applied route table",
+        "[INIT] Authenticating proxy identity … passed",
+        "[INFO] Spawning 8 worker threads for packet forwarding",
+        "[ OK ] Worker pool ready",
+        "[INFO] Proxy control socket bound to /var/run/proxy.sock",
+        "[ OK ] Subsystem heartbeat registered",
+        "[INIT] Flushing old session tickets … cleared 27 entries",
+        "[ OK ] Cache warmup complete",
+        "[INFO] Proxy subsystem boot complete at 00:00:14.239 uptime",
+        "",
+        "Confirm?",
+        "Yes.",
+        "Launching…",
+    ];
 
-        // Run script; when done: open window only (no crash shake), then reset typing
-        try {
-            window.__MatrixFX && window.__MatrixFX.runScript(lines, () => {
-                const url = 'https://uvv2.rhw.one/active/';
-                const win = createAppWindow(url, 'Wave‑X Proxy');
-                // expose handle globally for control buttons
-                window.__proxyAppWin = win;
-                try {
-                    // Larger initial size by default
-                    const vw = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
-                    const vh = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
-                    const targetW = Math.floor(Math.min(1100, vw - 40));
-                    const targetH = Math.floor(Math.min(740, vh - 120));
-                    win.style.width = targetW + 'px';
-                    win.style.height = targetH + 'px';
-                    const grid = document.querySelector('.games-grid') || document.body;
-                    const gb = grid.getBoundingClientRect();
-                    const left = Math.max(12, gb.left + (gb.width - targetW) * 0.5);
-                    const top  = Math.max(56, gb.top + 24);
-                    win.style.left = left + 'px';
-                    win.style.top  = top  + 'px';
-                } catch {}
-                // reset effect back to normal code typing (no crash/reset animation)
-                setTimeout(() => { try { window.__MatrixFX && window.__MatrixFX.reset(); } catch {} }, 200);
-            });
-        } catch {
-            // Fallback: open immediately if scripting API missing
+    // Run script; when done: open window only (no crash shake/animation)
+    try {
+        window.__MatrixFX && window.__MatrixFX.runScript(lines, () => {
             const url = 'https://uvv2.rhw.one/active/';
-            createAppWindow(url, 'Wave‑X Proxy');
+            const win = createAppWindow(url, 'Wave-X Proxy');
+            window.__proxyAppWin = win; // expose handle globally for control buttons
+            try {
+                // Larger initial size by default
+                const vw = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
+                const vh = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+                const targetW = Math.floor(Math.min(1100, vw - 40));
+                const targetH = Math.floor(Math.min(740, vh - 120));
+                win.style.width = targetW + 'px';
+                win.style.height = targetH + 'px';
+                const grid = document.querySelector('.games-grid') || document.body;
+                const gb = grid.getBoundingClientRect();
+                const left = Math.max(12, gb.left + (gb.width - targetW) * 0.5);
+                const top  = Math.max(56, gb.top + 24);
+                win.style.left = left + 'px';
+                win.style.top  = top  + 'px';
+            } catch {}
             setTimeout(() => { try { window.__MatrixFX && window.__MatrixFX.reset(); } catch {} }, 200);
-        }
-    });
-    return true;
-}
+        });
+    } catch {
+        // Fallback: open immediately if scripting API missing
+        const url = 'https://uvv2.rhw.one/active/';
+        createAppWindow(url, 'Wave-X Proxy');
+        setTimeout(() => { try { window.__MatrixFX && window.__MatrixFX.reset(); } catch {} }, 200);
+    }
+});
+
             // try now; if content panel not yet active, observe for it
             if (!attachProxyLaunch()) {
                 const obs = new MutationObserver(() => {
